@@ -5,11 +5,14 @@ android {
     buildToolsVersion "24.0.2"
     defaultConfig {
         applicationId "com.frlgrd.streamzone"
-        minSdkVersion 11
+        minSdkVersion 21
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        jackOptions {
+            enabled true
+        }
     }
     buildTypes {
         release {
@@ -25,5 +28,10 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:24.2.1'
     compile 'com.android.support:design:24.2.1'
-    testCompile 'junit:junit:4.12'
+    compile 'com.squareup:otto:1.3.8'
+
+    // RX
+    compile 'com.tbruyelle.rxpermissions:rxpermissions:0.7.1@aar'
+    compile 'io.reactivex:rxandroid:1.2.1'
+    compile 'io.reactivex:rxjava:1.1.6'
 }

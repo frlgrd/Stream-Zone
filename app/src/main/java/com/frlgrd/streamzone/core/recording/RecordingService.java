@@ -17,12 +17,13 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.frlgrd.streamzone.core.event.Otto;
-import com.frlgrd.streamzone.core.event.StartRecordingEvent;
+import com.frlgrd.streamzone.core.event.PrepareRecordingEvent;
 import com.frlgrd.streamzone.core.event.StopRecordingEvent;
 import com.squareup.otto.Subscribe;
 
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EService;
+import org.androidannotations.annotations.Receiver;
 import org.androidannotations.annotations.SystemService;
 
 import java.io.IOException;
@@ -45,6 +46,7 @@ public class RecordingService extends Service {
 
 	@Bean RecordingHelper recordingHelper;
 	@Bean Otto otto;
+	@Bean RecordingNotificationHelper recordingNotificationHelper;
 	@SystemService WindowManager windowManager;
 	@SystemService MediaProjectionManager mediaProjectionManager;
 
@@ -81,11 +83,15 @@ public class RecordingService extends Service {
 	}
 
 	@Subscribe
-	public void start(StartRecordingEvent startRecordingEvent) {
+	public void prepare(PrepareRecordingEvent prepareRecordingEvent) {
+		mediaProjection = mediaProjectionManager.getMediaProjection(prepareRecordingEvent.getResultCode(), prepareRecordingEvent.getIntent());
+		start();
+	}
+
+	private void start() {
 		if (recordingHelper.isRecording()) return;
 		recordingHelper.startRecording();
 		initRecorder();
-		mediaProjection = mediaProjectionManager.getMediaProjection(startRecordingEvent.getResultCode(), startRecordingEvent.getIntent());
 		mediaProjectionCallback = new MediaProjectionCallback();
 		mediaProjection.registerCallback(mediaProjectionCallback, null);
 		virtualDisplay = createVirtualDisplay();
@@ -93,6 +99,10 @@ public class RecordingService extends Service {
 	}
 
 	@Subscribe public void stop(StopRecordingEvent stopRecordingEvent) {
+		stop();
+	}
+
+	private void stop() {
 		if (!recordingHelper.isRecording()) return;
 		recordingHelper.stopRecording();
 		mediaRecorder.stop();
@@ -132,6 +142,16 @@ public class RecordingService extends Service {
 		destroyMediaProjection();
 		otto.unregister(this);
 		recordingHelper.recorderServiceKilled();
+	}
+
+	@Receiver(actions = RecordingHelper.ACTION_RECORD_START)
+	void startRequestFromNotification() {
+		start();
+	}
+
+	@Receiver(actions = RecordingHelper.ACTION_RECORD_STOP)
+	void stopRequestFromNotification() {
+		stop();
 	}
 
 	private void destroyMediaProjection() {

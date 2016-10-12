@@ -1,5 +1,5 @@
 <resources>
 	<string name="app_name">Stream Zone</string>
-	<string name="action_settings">Settings</string>
-	<string name="label_permissions">Please enable Microphone and Storage permissions.</string>
+	<string name="stop_stream">Stop</string>
+	<string name="continue_stream">Resume</string>
 </resources>

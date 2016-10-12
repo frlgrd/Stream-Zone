@@ -9,8 +9,8 @@ import android.widget.ToggleButton;
 
 import com.frlgrd.streamzone.R;
 import com.frlgrd.streamzone.core.event.Otto;
+import com.frlgrd.streamzone.core.event.PrepareRecordingEvent;
 import com.frlgrd.streamzone.core.event.RecordServiceReadyEvent;
-import com.frlgrd.streamzone.core.event.StartRecordingEvent;
 import com.frlgrd.streamzone.core.event.StopRecordingEvent;
 import com.frlgrd.streamzone.core.recording.RecordingHelper;
 import com.frlgrd.streamzone.core.recording.RecordingService_;
@@ -35,7 +35,7 @@ public class RecordingActivity extends AppCompatActivity {
 	@Bean Otto otto;
 	@Bean RecordingHelper recordingHelper;
 
-	private StartRecordingEvent startRecordingEvent;
+	private PrepareRecordingEvent prepareRecordingEvent;
 
 	@AfterViews void afterViews() {
 		otto.register(this);
@@ -81,7 +81,7 @@ public class RecordingActivity extends AppCompatActivity {
 		if (resultCode == RESULT_OK && requestCode == REQUEST_CAPTURE) {
 			if (!recordingHelper.isReady()) {
 				RecordingService_.intent(getApplication()).start();
-				startRecordingEvent = new StartRecordingEvent(data, resultCode);
+				prepareRecordingEvent = new PrepareRecordingEvent(data, resultCode);
 			} else {
 				toggle.setEnabled(true);
 			}
@@ -90,7 +90,7 @@ public class RecordingActivity extends AppCompatActivity {
 
 	private void onToggleScreenShare() {
 		if (toggle.isChecked()) {
-			otto.post(startRecordingEvent);
+			otto.post(prepareRecordingEvent);
 		} else {
 			otto.post(new StopRecordingEvent());
 		}

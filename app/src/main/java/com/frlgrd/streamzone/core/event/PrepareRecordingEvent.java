@@ -2,11 +2,11 @@ package com.frlgrd.streamzone.core.event;
 
 import android.content.Intent;
 
-public class StartRecordingEvent {
+public class PrepareRecordingEvent {
 	private Intent intent;
 	private int resultCode;
 
-	public StartRecordingEvent(Intent intent, int resultCode) {
+	public PrepareRecordingEvent(Intent intent, int resultCode) {
 		this.intent = intent;
 		this.resultCode = resultCode;
 	}

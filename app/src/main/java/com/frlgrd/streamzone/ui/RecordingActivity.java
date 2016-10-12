@@ -1,81 +1,98 @@
 package com.frlgrd.streamzone.ui;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.media.projection.MediaProjectionManager;
-import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ToggleButton;
 
-import com.frlgrd.streamzone.App;
 import com.frlgrd.streamzone.R;
-import com.frlgrd.streamzone.core.event.MediaProjectionInfosHolder;
-import com.frlgrd.streamzone.core.event.RecordServiceReady;
-import com.frlgrd.streamzone.core.event.StartRecording;
-import com.frlgrd.streamzone.core.event.StopRecording;
-import com.frlgrd.streamzone.core.recording.RecordingService;
+import com.frlgrd.streamzone.core.event.Otto;
+import com.frlgrd.streamzone.core.event.RecordServiceReadyEvent;
+import com.frlgrd.streamzone.core.event.StartRecordingEvent;
+import com.frlgrd.streamzone.core.event.StopRecordingEvent;
+import com.frlgrd.streamzone.core.recording.RecordingHelper;
+import com.frlgrd.streamzone.core.recording.RecordingService_;
 import com.squareup.otto.Subscribe;
 import com.tbruyelle.rxpermissions.RxPermissions;
 
+import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.SystemService;
+import org.androidannotations.annotations.ViewById;
+
+import rx.functions.Action1;
+
+@SuppressWarnings("unused")
+@EActivity(value = R.layout.activity_main)
 public class RecordingActivity extends AppCompatActivity {
 
 	private static final int REQUEST_CAPTURE = 42;
+	@ViewById ToggleButton toggle;
+	@SystemService MediaProjectionManager projectionManager;
+	@Bean Otto otto;
+	@Bean RecordingHelper recordingHelper;
 
-	private MediaProjectionManager projectionManager;
-	private MediaProjectionInfosHolder projectionInfoHolder;
+	private StartRecordingEvent startRecordingEvent;
 
-	private ToggleButton toggleButton;
+	@AfterViews void afterViews() {
+		otto.register(this);
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		toggle.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				onToggleScreenShare();
+			}
+		});
 
-		toggleButton = (ToggleButton) findViewById(R.id.toggle);
-		toggleButton.setOnClickListener(RecordingActivity.this::onToggleScreenShare);
-		RxPermissions.getInstance(this).request(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO)
-				.subscribe(granted -> {
-					if (granted) {
-						projectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-						startActivityForResult(projectionManager.createScreenCaptureIntent(), REQUEST_CAPTURE);
-					}
-				});
+		if (!recordingHelper.isRecording()) {
+			checkPermissions();
+		}
 
-		App.BUS.register(this);
+		toggle.setEnabled(recordingHelper.isReady());
+		toggle.setChecked(recordingHelper.isRecording());
 	}
 
-	@Override
-	protected void onDestroy() {
-		App.BUS.unregister(this);
+	private void checkPermissions() {
+		RxPermissions.getInstance(this).request(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+				.subscribe(new Action1<Boolean>() {
+					@Override
+					public void call(Boolean granted) {
+						if (granted) {
+							startActivityForResult(projectionManager.createScreenCaptureIntent(), REQUEST_CAPTURE);
+						}
+					}
+				});
+	}
+
+	@Override protected void onDestroy() {
+		otto.unregister(this);
 		super.onDestroy();
 	}
 
-	@Subscribe
-	public void onServiceIsReady(RecordServiceReady ready) {
-		App.BUS.post(projectionInfoHolder);
-		toggleButton.setEnabled(true);
+	@Subscribe public void onServiceIsReady(RecordServiceReadyEvent ready) {
+		toggle.setEnabled(true);
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	@Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
 		if (resultCode == RESULT_OK && requestCode == REQUEST_CAPTURE) {
-			if (!RecordingService.ready) {
-				startService(new Intent(this, RecordingService.class));
-				projectionInfoHolder = new MediaProjectionInfosHolder(data, resultCode);
+			if (!recordingHelper.isReady()) {
+				RecordingService_.intent(getApplication()).start();
+				startRecordingEvent = new StartRecordingEvent(data, resultCode);
 			} else {
-				toggleButton.setEnabled(true);
+				toggle.setEnabled(true);
 			}
 		}
 	}
 
-	public void onToggleScreenShare(View view) {
-		if (((ToggleButton) view).isChecked()) {
-			App.BUS.post(new StartRecording());
+	private void onToggleScreenShare() {
+		if (toggle.isChecked()) {
+			otto.post(startRecordingEvent);
 		} else {
-			App.BUS.post(new StopRecording());
+			otto.post(new StopRecordingEvent());
 		}
 	}
 }

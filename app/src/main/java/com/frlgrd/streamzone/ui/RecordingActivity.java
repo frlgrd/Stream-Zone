@@ -81,10 +81,10 @@ public class RecordingActivity extends AppCompatActivity {
 		if (resultCode == RESULT_OK && requestCode == REQUEST_CAPTURE) {
 			if (!recordingHelper.isReady()) {
 				RecordingService_.intent(getApplication()).start();
-				prepareRecordingEvent = new PrepareRecordingEvent(data, resultCode);
 			} else {
 				toggle.setEnabled(true);
 			}
+			prepareRecordingEvent = new PrepareRecordingEvent(data, resultCode);
 		}
 	}
 

@@ -1,21 +1,34 @@
 package com.frlgrd.streamzone.ui;
 
 import android.support.v7.app.AppCompatActivity;
-import android.widget.ToggleButton;
+import android.util.Log;
 
 import com.frlgrd.streamzone.R;
+import com.frlgrd.streamzone.core.recording.RecordingManager;
 
-import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.CheckedChange;
 import org.androidannotations.annotations.EActivity;
-import org.androidannotations.annotations.ViewById;
+
+import rx.functions.Action1;
 
 @EActivity(value = R.layout.activity_main)
 public class MainActivityActivity extends AppCompatActivity {
 
-	@ViewById ToggleButton toggle;
+	@Bean RecordingManager recordingManager;
 
-	@AfterViews
-	void afterViews() {
+	@CheckedChange
+	void toggle(boolean isChecked) {
+		Log.d("", "");
+		if (isChecked) {
+			recordingManager.requestPermissions()
+					.subscribe(new Action1<Boolean>() {
+						@Override public void call(Boolean granted) {
+							Log.d("", "");
+						}
+					});
+		} else {
 
+		}
 	}
 }

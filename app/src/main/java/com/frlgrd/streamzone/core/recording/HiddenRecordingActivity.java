@@ -10,7 +10,7 @@ import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.SystemService;
 
 @EActivity
-public class HiddenRecordingActivity extends Activity {
+class HiddenRecordingActivity extends Activity {
 
 	private static final int REQUEST_CODE = 42;
 

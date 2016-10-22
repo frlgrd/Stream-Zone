@@ -9,6 +9,7 @@ import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.util.SparseIntArray;
 import android.view.WindowManager;
@@ -16,12 +17,10 @@ import android.view.WindowManager;
 import com.frlgrd.streamzone.core.streaming.StreamManager;
 import com.tbruyelle.rxpermissions.RxPermissions;
 
-import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EBean;
 import org.androidannotations.annotations.RootContext;
 import org.androidannotations.annotations.SystemService;
-import org.androidannotations.annotations.UiThread;
 
 import java.io.IOException;
 
@@ -32,10 +31,10 @@ import rx.subjects.PublishSubject;
 @EBean(scope = EBean.Scope.Singleton)
 public class RecordingManager {
 
+	public static final String OUTPUT_FILE_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/stream.mp4";
 	private static final int DISPLAY_WIDTH = 720;
 	private static final int DISPLAY_HEIGHT = 1280;
 	private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
 	@SystemService MediaProjectionManager mediaProjectionManager;
 	@SystemService WindowManager windowManager;
 	@RootContext Context context;
@@ -46,7 +45,6 @@ public class RecordingManager {
 	private MediaProjectionCallback mediaProjectionCallback;
 	private MediaRecorder mediaRecorder;
 	private PublishSubject<Boolean> recordingPermissionPublishSubject;
-
 	private boolean isRecording = false;
 
 	public Observable<Boolean> requestPermissions() {
@@ -74,16 +72,8 @@ public class RecordingManager {
 		recordingPermissionPublishSubject.onNext(false);
 	}
 
-
 	private Observable<Boolean> hasSystemPermission() {
 		return RxPermissions.getInstance(context).request(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-	}
-
-	@UiThread
-	void shareScreen() {
-		virtualDisplay = createVirtualDisplay();
-		mediaRecorder.start();
-		isRecording = true;
 	}
 
 	public void start() {
@@ -102,13 +92,12 @@ public class RecordingManager {
 				mediaRecorder.getSurface(), null, null);
 	}
 
-	@Background
-	void initRecorder() {
+	private void initRecorder() {
 		try {
 			mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
 			mediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
 			mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-			mediaRecorder.setOutputFile(streamManager.getParcelFileDescriptor().getFileDescriptor());
+			mediaRecorder.setOutputFile(OUTPUT_FILE_PATH);
 			mediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 			mediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
 			mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
@@ -122,6 +111,21 @@ public class RecordingManager {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void shareScreen() {
+		virtualDisplay = createVirtualDisplay();
+		mediaRecorder.start();
+		recordStarted();
+		streamManager.stream();
+	}
+
+	private void recordStarted() {
+		isRecording = true;
+	}
+
+	private void recordStopped() {
+		isRecording = false;
 	}
 
 	public void stop() {
@@ -143,16 +147,15 @@ public class RecordingManager {
 	}
 
 	private class MediaProjectionCallback extends MediaProjection.Callback {
-		@Override
-		public void onStop() {
+		@Override public void onStop() {
 			if (isRecording) {
-				isRecording = false;
 				mediaRecorder.stop();
 				mediaRecorder.reset();
 			}
 			mediaProjection.unregisterCallback(mediaProjectionCallback);
 			mediaProjection = null;
 			stop();
+			recordStopped();
 		}
 	}
 }

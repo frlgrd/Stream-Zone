@@ -52,4 +52,5 @@ dependencies {
     compile 'com.tbruyelle.rxpermissions:rxpermissions:0.7.1@aar'
     compile 'io.reactivex:rxandroid:1.2.1'
     compile 'io.reactivex:rxjava:1.1.6'
+    compile 'commons-io:commons-io:2.0.1'
 }

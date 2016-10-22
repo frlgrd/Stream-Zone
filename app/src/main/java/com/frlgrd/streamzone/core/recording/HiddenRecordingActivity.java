@@ -29,5 +29,6 @@ class HiddenRecordingActivity extends Activity {
 			recordingManager.onStreamPermissionDenied();
 		}
 		finish();
+		overridePendingTransition(0, 0);
 	}
 }

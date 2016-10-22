@@ -28,7 +28,7 @@
 		</activity>
 
 		<activity
-			android:name=".core.recording.HiddenRecordingActivity_"
+			android:name=".core.recording.HiddenRecordingPermissionActivity_"
 			android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 	</application>
 </manifest>

@@ -60,7 +60,7 @@ public class RecordingManager {
 
 	private Observable<Boolean> hasRecordingPermission() {
 		recordingPermissionPublishSubject = PublishSubject.create();
-		HiddenRecordingActivity_.intent(context).start().withAnimation(0, 0);
+		HiddenRecordingPermissionActivity_.intent(context).start().withAnimation(0, 0);
 		return recordingPermissionPublishSubject.asObservable();
 	}
 
@@ -70,19 +70,20 @@ public class RecordingManager {
 		recordingPermissionPublishSubject.onNext(true);
 	}
 
+	void onStreamPermissionDenied() {
+		recordingPermissionPublishSubject.onNext(false);
+	}
+
+
+	private Observable<Boolean> hasSystemPermission() {
+		return RxPermissions.getInstance(context).request(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+	}
+
 	@UiThread
 	void shareScreen() {
 		virtualDisplay = createVirtualDisplay();
 		mediaRecorder.start();
 		isRecording = true;
-	}
-
-	void onStreamPermissionDenied() {
-		recordingPermissionPublishSubject.onNext(false);
-	}
-
-	private Observable<Boolean> hasSystemPermission() {
-		return RxPermissions.getInstance(context).request(Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 	}
 
 	public void start() {

@@ -16,8 +16,14 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        jackOptions {
+            enabled true
+        }
     }
-
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -28,12 +34,6 @@ android {
 
 // Android Annotations
 def AAVersion = '4.0.0'
-apply plugin: 'android-apt'
-apt {
-    arguments {
-        androidManifestFile variant.outputs[0]?.processResources?.manifestFile
-    }
-}
 
 dependencies {
 
@@ -45,12 +45,17 @@ dependencies {
     compile 'com.android.support:design:24.2.1'
 
     // Android Annotations
-    apt "org.androidannotations:androidannotations:$AAVersion"
+    annotationProcessor "org.androidannotations:androidannotations:$AAVersion"
     compile "org.androidannotations:androidannotations-api:$AAVersion"
 
     // RX
     compile 'com.tbruyelle.rxpermissions:rxpermissions:0.7.1@aar'
     compile 'io.reactivex:rxandroid:1.2.1'
     compile 'io.reactivex:rxjava:1.1.6'
-    compile 'commons-io:commons-io:2.0.1'
+}
+
+// add annotation processing options to jack
+android.applicationVariants.all { variant ->
+    variant.variantData.variantConfiguration.javaCompileOptions.annotationProcessorOptions
+            .arguments = ['androidManifestFile': variant.outputs[0]?.processResources?.manifestFile?.absolutePath]
 }

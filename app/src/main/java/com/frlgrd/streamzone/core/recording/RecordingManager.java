@@ -25,7 +25,6 @@ import org.androidannotations.annotations.SystemService;
 import java.io.IOException;
 
 import rx.Observable;
-import rx.functions.Func2;
 import rx.subjects.PublishSubject;
 
 @EBean(scope = EBean.Scope.Singleton)
@@ -48,11 +47,9 @@ public class RecordingManager {
 	private boolean isRecording = false;
 
 	public Observable<Boolean> requestPermissions() {
-		return Observable.zip(hasSystemPermission(), hasRecordingPermission(), new Func2<Boolean, Boolean, Boolean>() {
-			@Override public Boolean call(Boolean systemPermissionGranted, Boolean recordingPermissionGranted) {
-				recordingPermissionPublishSubject.onCompleted();
-				return systemPermissionGranted && recordingPermissionGranted;
-			}
+		return Observable.zip(hasSystemPermission(), hasRecordingPermission(), (systemPermissionGranted, recordingPermissionGranted) -> {
+			recordingPermissionPublishSubject.onCompleted();
+			return systemPermissionGranted && recordingPermissionGranted;
 		});
 	}
 

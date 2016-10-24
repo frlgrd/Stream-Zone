@@ -10,7 +10,6 @@ import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EBean;
 import org.androidannotations.annotations.SystemService;
-import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.FileDescriptor;
@@ -39,13 +38,19 @@ public class StreamManager {
 			long pointerPosition = 0;
 			file.seek(pointerPosition);
 			while ((line = r.readLine()) != null && recordingManager.isRecording()) {
-				
+
 			}
 			Log.e("STREAM", String.valueOf(pointerPosition));
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			IOUtils.closeQuietly(inputStream);
+			if (inputStream != null) {
+				try {
+					inputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
